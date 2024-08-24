@@ -7,6 +7,7 @@ const path = require('node:path');
 const { channelOwners } = require('./methods/channelowner');
 const { togglePrivate } = require('./methods/private');
 const { channel } = require('node:diagnostics_channel');
+const { waitingRoom } = require('./methods/waitingRoom');
 const token = process.env.DISCORD_TOKEN;
 
 const FIELD_CATERGORYID_NAME = "CATEGORYID"
@@ -139,16 +140,26 @@ client.on('voiceStateUpdate',
 			//Handle Channel deletion
 			.then(oldChannel => {
 				if (oldChannel.parentId === settings.category && oldChannel.members.size === 0 && oldChannel.id !== settings.voiceChannelId) {
+					if (waitingRoom.get(oldChannel.id)) {
+						console.log(waitingRoom)
+						return;
+					}
 					if (checkIdInFile(guild.id, oldChannel.id)) {
 						return;
 					}
+
 				channelOwners.delete(oldChannel.id);
+				waitingRoom.delete(oldChannel.id);
+				waitingRoomId = waitingRoom.get(oldChannel.id);
+				if (waitingRoomId) {
+					waitingRoomId.delete();
+				}
 				oldChannel.delete()
 					.then(() => {
 						//console.log(`Deleted empty channel: ${oldChannel.name}`);
 					})
 					.catch(error => {
-						//console.error('Error deleting channel:', error);
+						console.error('Error deleting channel:', error);
 					});
 					return;
 		}
