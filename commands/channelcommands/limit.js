@@ -35,7 +35,7 @@ module.exports = {
         try {
 
             // Remove the channel permissions for @everyone
-            targetChannel.setUserLimit(limi)
+            targetChannel.setUserLimit(limit)
             return interaction.reply({ content: `the limit was adjusted to ${limit}`, ephemeral: true });
             
         } catch (error) {
