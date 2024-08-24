@@ -1,7 +1,62 @@
 const { Client, SlashCommandBuilder, PermissionFlagsBits , ChannelType, GuildChannel } = require('discord.js');
 require('dotenv').config();
-const { channelOwners } = require('../../methods/channelowner');
-const { toggleLock } = require('../../methods/locks');
+const fs = require('node:fs');
+
+/* function  createSettingsFile()
+ * 
+ * description: Creates a settings file for the guild
+ * 
+ * parameters: string guildId: The guild id to get the settings for
+ * 
+ * Returns: None
+ */
+function createSettingsFile(guildId) {
+  const directoryPath = `./globalserversettings/permvoice/${guildId}`;
+  const filePath = `${directoryPath}/settings.cfg`;
+  const fileContents = ``;
+
+  try {
+    fs.mkdirSync(directoryPath, { recursive: true });
+    fs.writeFileSync(filePath, fileContents, 'utf8');
+    console.log('Settings file created successfully');
+  } catch (error) {
+    console.error('Error creating settings file:', error);
+  }
+}
+
+/* function  managePermVoiceChannels()
+ * 
+ * description: Creates a settings file for the guild
+ * 
+ * parameters: string guildId: The guild id to get the settings for
+ *             string channelid: The channel id to add or delete from th settings file
+ * 
+ * Returns: None
+ */
+function managePermVoiceChannels(guildId, channelid) {
+    const filePath = `./globalserversettings/permvoice/${guildId}/settings.cfg`;
+    
+    //Read the existing settings file
+    let fileContent = fs.readFileSync(filePath, 'utf-8');
+
+    // Split the file into lines
+    const lines = fileContent.split('/\r?\n/').filter(line => line.trim());
+    console.log(lines)
+
+    // Check if the channel id exists in the file
+    if (lines.includes(channelid)) {
+      //Remove the channel id from the file
+      const lines = fileContent.split('\n');
+      const updatedLine = lines.filter(line => line !== channelid);
+      fileContent = updatedLine.join('\n');
+    } else {
+      //Add the channel id to the file
+      fileContent += channelid + '\n';
+    }
+
+    //Write the updated file
+    fs.writeFileSync(filePath, fileContent, 'utf-8');
+}
 
 module.exports = {
   category: 'permanentvoice',
@@ -12,28 +67,22 @@ module.exports = {
         option
           .setName('channel')
           .setDescription('The create voice channel id to use.')
-          .addChannelTypes(ChannelType.GuildVoice)
-          .setRequired(false))
+          .addChannelTypes(ChannelType.GuildVoice, ChannelType.GuildStageVoice, ChannelType.GuildText, ChannelType.GuildForum, ChannelType.GuildMedia, ChannelType.GuildAnnouncement)
+          .setRequired(true))
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
   async execute(interaction) {
     const guild = interaction.guild
-    const member = await interaction.guild.members.fetch(interaction.user.id);
-    const currentChannel = member.voice.channel.id;
-    const targetVoice = interaction.options.getChannel('channel');
+    const target = interaction.options.getChannel('channel');
 
-    //Check if the user is in a voice channel
-    if (!channelOwners.has(currentChannel)) {
-        return interaction.reply({ content: 'You must be in a temporary channel.', ephemeral: true });
+    if (!fs.existsSync(`./globalserversettings/permvoice/${guild.id}/settings.cfg`)) {
+      console.log("Settings file does not exist. Creating settings file.");
+      createSettingsFile(guild.id);
     }
 
-    //Check if the user is the owner of the channel
-    if (channelOwners.get(currentChannel) !== member.id) {
-        return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-    }
-
-    //Method to set the channel permanet status toggles
+    //Method to set the channel permanent status toggles
         try {
-            await interaction.reply({ content:`This feature is a work in progress.`, ephemeral: true });
+            managePermVoiceChannels(guild.id, target);
+            await interaction.reply({ content:`The channel ${target} has been toggled.`, ephemeral: true });
             
         } catch (error) {
           await interaction.reply({ content:`There was an error while using the command.`, ephemeral: true });
