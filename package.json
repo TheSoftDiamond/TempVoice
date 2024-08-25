@@ -4,14 +4,21 @@
   "description": "Discord Bot",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js"
+    "lint": "eslint",
+    "fix": "eslint --fix"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
-    "lodash": "^4.17.21",
-    "sqlite3": "^5.1.7"
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.9.0"
   }
 }
